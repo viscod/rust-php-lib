@@ -10,7 +10,7 @@ fn main() {
     .with_crate(crate_dir)
     .with_language(Language::C)
     .with_no_includes() // First we strip the default include lines which are not needed
-    .with_header("#define FFI_LIB \"libmerge_pdf.so\"") // then we insert our custom definitions, the .so path is relative to the header file we're writing
+    .with_header("#define FFI_LIB \"libmerge_pdf.so\" \n#define FFI_SCOPE \"MergePdf\"") // then we insert our custom definitions, the .so path is relative to the header file we're writing
     .generate()
     .expect("Unable to generate bindings")
     .write_to_file("target/debug/merge_pdf.h");
