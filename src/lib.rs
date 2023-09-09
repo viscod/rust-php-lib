@@ -4,7 +4,7 @@ use std::ffi::{c_char, c_int, CStr, CString};
 use std::{slice, str};
 
 #[no_mangle]
-pub unsafe extern "C" fn merge_pdf<'a>(
+pub unsafe extern "C" fn merge_pdf(
     files: *const CString,
     size: c_int,
     save_path: &c_char,
