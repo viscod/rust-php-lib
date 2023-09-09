@@ -1,14 +1,21 @@
-use std::collections::BTreeMap;
-
 use lopdf::{Bookmark, Document, Object, ObjectId};
+use std::collections::BTreeMap;
+use std::ffi::{c_char, c_int, CStr, CString};
+use std::{slice, str};
 
 #[no_mangle]
-pub extern "C" fn merge_pdf<'a>(files: Vec<&str>, save_path: &'a str) -> &'a str {
-    if files.len() < 2 {
-        return "Please provide at least two PDF files to merge.";
-    }
+pub unsafe extern "C" fn merge_pdf<'a>(
+    files: *const CString,
+    size: c_int,
+    save_path: &c_char,
+) -> CString {
+    let files_vec: Vec<&str> = slice::from_raw_parts(files as *const *const c_char, size as usize)
+        .to_vec()
+        .iter()
+        .map(|&x| CStr::from_ptr(x).to_str().unwrap())
+        .collect::<Vec<&str>>();
 
-    let docs: Vec<Document> = files
+    let docs: Vec<Document> = files_vec
         .iter()
         .map(|file| Document::load(file).unwrap())
         .collect::<Vec<Document>>();
@@ -103,7 +110,7 @@ pub extern "C" fn merge_pdf<'a>(files: Vec<&str>, save_path: &'a str) -> &'a str
     if pages_object.is_none() {
         println!("Pages root not found.");
 
-        return "page root not found";
+        return CString::new("page root not found").unwrap();
     }
 
     // Iterate over all "Page" objects and collect into the parent "Pages" created before
@@ -122,7 +129,7 @@ pub extern "C" fn merge_pdf<'a>(files: Vec<&str>, save_path: &'a str) -> &'a str
     if catalog_object.is_none() {
         println!("Catalog root not found.");
 
-        return "catalog not found";
+        return CString::new("catalog not found").unwrap();
     }
 
     let catalog_object = catalog_object.unwrap();
@@ -182,7 +189,9 @@ pub extern "C" fn merge_pdf<'a>(files: Vec<&str>, save_path: &'a str) -> &'a str
 
     document.compress();
 
-    document.save(save_path).unwrap();
+    let save_path_doc = CStr::from_ptr(save_path).to_str().unwrap();
 
-   save_path
+    document.save(save_path_doc).unwrap();
+
+    CString::new(save_path_doc).unwrap()
 }
